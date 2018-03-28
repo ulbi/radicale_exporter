@@ -14,7 +14,7 @@ Flags:
   -l, --listen=":9191"                              address:port to serve /metrics on
   -i, --inputfile="/var/log/radicale/radicale.log"  radicale log file
   -s, --scrapeinterval=15                           Prometheus scrape interval
-  -r, --radicale=":6379"                            address:port to contact Radicale on
+  -r, --radicale=":5232"                            address:port to contact Radicale on
 ```
 
 ## Known Issues
