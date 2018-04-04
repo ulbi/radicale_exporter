@@ -6,7 +6,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"regexp"
+	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,6 +16,8 @@ import (
 )
 
 var (
+	inputFile *os.File
+
 	prm_listenAddr   string
 	prm_inputFile    string
 	prm_scrapeint    int
@@ -79,19 +83,44 @@ func parseFlags() {
 	kingpin.Parse()
 }
 
+func sighupListener(c chan os.Signal) {
+	signal.Notify(c, syscall.SIGHUP)
+
+	for {
+		if <-c == syscall.SIGHUP {
+			openInputFile()
+		}
+	}
+}
+
+func openInputFile() {
+	inputFile.Close()
+	tmp, err := os.OpenFile(prm_inputFile, os.O_RDWR, 0)
+	inputFile = tmp
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	parseFlags()
 	serveMetrics()
 
-	f, err := os.OpenFile(prm_inputFile, os.O_RDWR, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
+	c := make(chan os.Signal)
+	go sighupListener(c)
+	c <- syscall.SIGHUP
+
+	defer func() {
+		err := inputFile.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	for {
 		if checkTCP() {
-			scanner := bufio.NewScanner(f)
+			scanner := bufio.NewScanner(inputFile)
 
 			for scanner.Scan() {
 				inspectLine(scanner.Text())
