@@ -76,7 +76,7 @@ func serveMetrics() {
 
 func parseFlags() {
 	kingpin.Flag("listen", "address:port to serve /metrics on").Short('l').Default(":9191").StringVar(&prm_listenAddr)
-	kingpin.Flag("inputfile", "exporter input file").Short('i').Default("/var/log/radicale/radicale_exporter_input.log").StringVar(&prm_inputFile)
+	kingpin.Flag("inputfile", "exporter input file (truncated!)").Short('i').Default("/var/log/radicale/radicale_exporter_input.log").StringVar(&prm_inputFile)
 	kingpin.Flag("scrapeinterval", "Prometheus scrape interval").Short('s').Default("15").IntVar(&prm_scrapeIntvl)
 	kingpin.Flag("radicale", "address:port to contact Radicale on").Short('r').Default(":5232").StringVar(&prm_radicaleAddr)
 	kingpin.CommandLine.HelpFlag.Hidden()
