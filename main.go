@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"net/http"
 	"regexp"
@@ -89,22 +88,19 @@ func main() {
 	parseFlags()
 	serveMetrics()
 
-	err := handlekeeper.OpenFile(prm_inputFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer handlekeeper.Close()
+	hk := handlekeeper.NewHandlekeeper(prm_inputFile)
+	defer hk.Close()
 
 	for {
-		if checkTCP() {
-			scanner := bufio.NewScanner(handlekeeper.InputFile)
+		if prm_debug || checkTCP() {
+			scanner := bufio.NewScanner(hk.Handle)
 
 			for scanner.Scan() {
 				inspectLine(scanner.Text())
 			}
 
-			handlekeeper.InputFile.Truncate(0)
-			handlekeeper.InputFile.Seek(0, 0)
+			hk.Handle.Truncate(0)
+			hk.Handle.Seek(0, 0)
 		}
 
 		time.Sleep(time.Duration(prm_scrapeIntvl) * time.Second)
