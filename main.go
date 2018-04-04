@@ -46,8 +46,8 @@ func inspectLine(line string) {
 	result := regexp.MustCompile(pattern).FindStringSubmatch(line)
 
 	if prm_debug {
+		println("parsed: ", line)
 	}
-	println("parsed:", line)
 
 	if result != nil {
 		mtr_requests.WithLabelValues(result[1], result[2]).Inc()
