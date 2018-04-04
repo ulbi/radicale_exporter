@@ -79,7 +79,7 @@ func parseFlags() {
 	kingpin.Flag("inputfile", "exporter input file (truncated!)").Short('i').Default("/var/log/radicale/radicale_exporter_input.log").StringVar(&prm_inputFile)
 	kingpin.Flag("scrapeinterval", "Prometheus scrape interval").Short('s').Default("15").IntVar(&prm_scrapeIntvl)
 	kingpin.Flag("radicale", "address:port to contact Radicale on").Short('r').Default(":5232").StringVar(&prm_radicaleAddr)
-	kingpin.Flag("debug", "print parsed lines").Short('d').Default("false").BoolVar(&prm_debug)
+	kingpin.Flag("debug", "more output and skip TCP socket check").Short('d').Default("false").BoolVar(&prm_debug)
 	kingpin.CommandLine.HelpFlag.Hidden()
 	kingpin.Parse()
 }

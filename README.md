@@ -17,7 +17,7 @@ Flags:
   -i, --inputfile="/var/log/radicale/radicale_exporter_input.log"  exporter input file (truncated!)
   -s, --scrapeinterval=15                                          Prometheus scrape interval
   -r, --radicale=":5232"                                           address:port to contact Radicale on
-  -d, --debug="false"                                              more output and skip TCP socket check
+  -d, --debug                                                      more output and skip TCP socket check
 ```
 
 ## Supported versions
