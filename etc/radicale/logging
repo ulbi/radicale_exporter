@@ -1,0 +1,36 @@
+[loggers]
+keys = root
+
+[handlers]
+keys = console,file,file2
+
+[formatters]
+keys = simple,full
+
+[logger_root]
+level = INFO
+handlers = file,file2
+
+[handler_console]
+class = StreamHandler
+level = INFO
+args = (sys.stdout,)
+formatter = simple
+
+[handler_file]
+class = FileHandler
+args = ('/var/log/radicale/radicale.log',)
+level = INFO
+formatter = full
+
+[handler_file2]
+class = FileHandler
+args = ('/var/log/radicale/radicale_exporter_input.log',)
+level = INFO
+formatter = full
+
+[formatter_simple]
+format = %(message)s
+
+[formatter_full]
+format = %(asctime)s - %(levelname)s: %(message)s

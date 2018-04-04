@@ -6,12 +6,12 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
+	"path"
 	"regexp"
-	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tywkeene/go-fsevents"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -20,7 +20,7 @@ var (
 
 	prm_listenAddr   string
 	prm_inputFile    string
-	prm_scrapeint    int
+	prm_scrapeIntvl  int
 	prm_radicaleAddr string
 
 	mtr_up = prometheus.NewGauge(
@@ -76,47 +76,51 @@ func serveMetrics() {
 
 func parseFlags() {
 	kingpin.Flag("listen", "address:port to serve /metrics on").Short('l').Default(":9191").StringVar(&prm_listenAddr)
-	kingpin.Flag("inputfile", "radicale log file").Short('i').Default("/var/log/radicale/radicale.log").StringVar(&prm_inputFile)
-	kingpin.Flag("scrapeinterval", "Prometheus scrape interval").Short('s').Default("15").IntVar(&prm_scrapeint)
+	kingpin.Flag("inputfile", "exporter input file").Short('i').Default("/var/log/radicale/radicale_exporter_input.log").StringVar(&prm_inputFile)
+	kingpin.Flag("scrapeinterval", "Prometheus scrape interval").Short('s').Default("15").IntVar(&prm_scrapeIntvl)
 	kingpin.Flag("radicale", "address:port to contact Radicale on").Short('r').Default(":5232").StringVar(&prm_radicaleAddr)
 	kingpin.CommandLine.HelpFlag.Hidden()
 	kingpin.Parse()
 }
 
-func sighupListener(c chan os.Signal) {
-	signal.Notify(c, syscall.SIGHUP)
-
-	for {
-		if <-c == syscall.SIGHUP {
-			openInputFile()
-		}
-	}
-}
-
 func openInputFile() {
-	inputFile.Close()
-	tmp, err := os.OpenFile(prm_inputFile, os.O_RDWR, 0)
-	inputFile = tmp
+	var err error
+	inputFile, err = os.OpenFile(prm_inputFile, os.O_RDWR|os.O_CREATE, 0644)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
+func inotifyListener() {
+	options := &fsevents.WatcherOptions{
+		Recursive: false,
+	}
+
+	w, err := fsevents.NewWatcher(path.Dir(prm_inputFile), fsevents.FileRemovedEvent, options)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.StartAll()
+	go w.Watch()
+
+	for {
+		event := <-w.Events
+
+		if event.IsFileRemoved() && event.Path == prm_inputFile {
+			openInputFile()
+		}
+	}
+}
+
 func main() {
 	parseFlags()
 	serveMetrics()
+	go inotifyListener()
 
-	c := make(chan os.Signal)
-	go sighupListener(c)
-	c <- syscall.SIGHUP
-
-	defer func() {
-		err := inputFile.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	openInputFile()
+	defer inputFile.Close()
 
 	for {
 		if checkTCP() {
@@ -125,8 +129,11 @@ func main() {
 			for scanner.Scan() {
 				inspectLine(scanner.Text())
 			}
+
+			inputFile.Truncate(0)
+			inputFile.Seek(0, 0)
 		}
 
-		time.Sleep(time.Duration(prm_scrapeint) * time.Second)
+		time.Sleep(time.Duration(prm_scrapeIntvl) * time.Second)
 	}
 }
