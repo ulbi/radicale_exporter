@@ -88,7 +88,7 @@ func main() {
 	parseFlags()
 	serveMetrics()
 
-	hk := handlekeeper.NewHandlekeeper(prm_inputFile)
+	hk, _ := handlekeeper.NewHandlekeeper(prm_inputFile)
 	defer hk.Close()
 
 	for {
