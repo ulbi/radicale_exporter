@@ -32,7 +32,7 @@ var (
 		prometheus.CounterOpts{
 			Namespace: "radicale",
 			Name:      "requests",
-			Help:      "number of requests to ressouces",
+			Help:      "number of requests to ressources",
 		},
 		[]string{
 			"type",
