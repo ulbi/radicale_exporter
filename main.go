@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"log"
 	"net"
 	"net/http"
 	"regexp"
@@ -71,7 +72,9 @@ func serveMetrics() {
 	prometheus.MustRegister(mtr_requests)
 
 	http.Handle("/metrics", prometheus.Handler())
-	go http.ListenAndServe(prm_listenAddr, nil)
+	go func() {
+		log.Fatalf("Metrics server crashed: %s", http.ListenAndServe(prm_listenAddr, nil))
+	}()
 }
 
 func parseFlags() {
