@@ -91,7 +91,10 @@ func main() {
 	parseFlags()
 	serveMetrics()
 
-	hk, _ := handlekeeper.NewHandlekeeper(prm_inputFile)
+	hk, err := handlekeeper.NewHandlekeeper(prm_inputFile)
+	if err != nil {
+		log.Fatalln("could not open input file")
+	}
 	defer hk.Close()
 
 	for {
