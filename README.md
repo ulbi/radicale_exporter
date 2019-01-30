@@ -1,4 +1,6 @@
 # radicale_exporter
+[![Go Report Card](https://goreportcard.com/badge/github.com/danielb42/radicale_exporter)](https://goreportcard.com/report/github.com/danielb42/radicale_exporter) 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
 
 A very simple Prometheus exporter for the [Radicale CalDAV/CardDAV server](http://radicale.org)
 
