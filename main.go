@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/danielb42/handlekeeper"
 	"github.com/prometheus/client_golang/prometheus"
-	"gitlab.com/danielb42/handlekeeper"
-	"gopkg.in/alecthomas/kingpin.v2"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
