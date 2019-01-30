@@ -14,13 +14,13 @@ import (
 )
 
 var (
-	prm_listenAddr   string
-	prm_inputFile    string
-	prm_scrapeIntvl  int
-	prm_radicaleAddr string
-	prm_debug        bool
+	prmListenAddr   string
+	prmInputFile    string
+	prmScrapeIntvl  int
+	prmRadicaleAddr string
+	prmDebug        bool
 
-	mtr_up = prometheus.NewGauge(
+	mtrUp = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: "radicale",
 			Name:      "up",
@@ -28,7 +28,7 @@ var (
 		},
 	)
 
-	mtr_requests = prometheus.NewCounterVec(
+	mtrRequests = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "radicale",
 			Name:      "requests",
@@ -45,44 +45,44 @@ func inspectLine(line string) {
 	pattern := `INFO: (.+) request at (.+/.+)/(.+)? received`
 	result := regexp.MustCompile(pattern).FindStringSubmatch(line)
 
-	if prm_debug {
+	if prmDebug {
 		println("parsed: ", line)
 	}
 
 	if result != nil {
-		mtr_requests.WithLabelValues(result[1], result[2]).Inc()
+		mtrRequests.WithLabelValues(result[1], result[2]).Inc()
 	}
 }
 
 func checkTCP() bool {
-	conn, err := net.Dial("tcp", prm_radicaleAddr)
+	conn, err := net.Dial("tcp", prmRadicaleAddr)
 
 	if err != nil {
-		mtr_up.Set(0)
+		mtrUp.Set(0)
 		return false
-	} else {
-		conn.Close()
-		mtr_up.Set(1)
-		return true
 	}
+
+	conn.Close()
+	mtrUp.Set(1)
+	return true
 }
 
 func serveMetrics() {
-	prometheus.MustRegister(mtr_up)
-	prometheus.MustRegister(mtr_requests)
+	prometheus.MustRegister(mtrUp)
+	prometheus.MustRegister(mtrRequests)
 
 	http.Handle("/metrics", prometheus.Handler())
 	go func() {
-		log.Fatalf("Metrics server crashed: %s", http.ListenAndServe(prm_listenAddr, nil))
+		log.Fatalf("Metrics server crashed: %s", http.ListenAndServe(prmListenAddr, nil))
 	}()
 }
 
 func parseFlags() {
-	kingpin.Flag("listen", "address:port to serve /metrics on").Short('l').Default(":9191").StringVar(&prm_listenAddr)
-	kingpin.Flag("inputfile", "exporter input file (truncated!)").Short('i').Default("/var/log/radicale/radicale_exporter_input.log").StringVar(&prm_inputFile)
-	kingpin.Flag("scrapeinterval", "Prometheus scrape interval").Short('s').Default("15").IntVar(&prm_scrapeIntvl)
-	kingpin.Flag("radicale", "address:port to contact Radicale on").Short('r').Default(":5232").StringVar(&prm_radicaleAddr)
-	kingpin.Flag("debug", "more output and skip TCP socket check").Short('d').Default("false").BoolVar(&prm_debug)
+	kingpin.Flag("listen", "address:port to serve /metrics on").Short('l').Default(":9191").StringVar(&prmListenAddr)
+	kingpin.Flag("inputfile", "exporter input file (truncated!)").Short('i').Default("/var/log/radicale/radicale_exporter_input.log").StringVar(&prmInputFile)
+	kingpin.Flag("scrapeinterval", "Prometheus scrape interval").Short('s').Default("15").IntVar(&prmScrapeIntvl)
+	kingpin.Flag("radicale", "address:port to contact Radicale on").Short('r').Default(":5232").StringVar(&prmRadicaleAddr)
+	kingpin.Flag("debug", "more output and skip TCP socket check").Short('d').Default("false").BoolVar(&prmDebug)
 	kingpin.CommandLine.HelpFlag.Hidden()
 	kingpin.Parse()
 }
@@ -91,14 +91,14 @@ func main() {
 	parseFlags()
 	serveMetrics()
 
-	hk, err := handlekeeper.NewHandlekeeper(prm_inputFile)
+	hk, err := handlekeeper.NewHandlekeeper(prmInputFile)
 	if err != nil {
 		log.Fatalln("could not open input file")
 	}
 	defer hk.Close()
 
 	for {
-		if prm_debug || checkTCP() {
+		if prmDebug || checkTCP() {
 			scanner := bufio.NewScanner(hk.Handle)
 
 			for scanner.Scan() {
@@ -109,6 +109,6 @@ func main() {
 			hk.Handle.Seek(0, 0)
 		}
 
-		time.Sleep(time.Duration(prm_scrapeIntvl) * time.Second)
+		time.Sleep(time.Duration(prmScrapeIntvl) * time.Second)
 	}
 }
