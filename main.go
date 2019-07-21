@@ -10,6 +10,7 @@ import (
 
 	"github.com/danielb42/handlekeeper"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -71,7 +72,7 @@ func serveMetrics() {
 	prometheus.MustRegister(mtrUp)
 	prometheus.MustRegister(mtrRequests)
 
-	http.Handle("/metrics", prometheus.Handler())
+	http.Handle("/metrics", promhttp.Handler())
 	go func() {
 		log.Fatalf("Metrics server crashed: %s", http.ListenAndServe(prmListenAddr, nil))
 	}()
